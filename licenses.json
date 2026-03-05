@@ -16,10 +16,10 @@
       "type": "daily",
       "duration_days": 0,
       "created_at": "2026-03-05",
-      "activated": false,
-      "machine_id": null,
-      "activated_at": null,
-      "expires_at": null,
+      "activated": true,
+      "machine_id": "ea84de1b5c47af8e24ba1cba96bf7644",
+      "activated_at": "2026-03-05T10:35:02.033357",
+      "expires_at": "2026-03-06T10:35:02.033357",
       "revoked": false
     }
   ]

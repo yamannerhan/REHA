@@ -10,6 +10,17 @@
       "machine_id": null,
       "activated_at": null,
       "expires_at": null
+    },
+    {
+      "key": "GC-LYJZC-TET4B-5BJOZ",
+      "type": "daily",
+      "duration_days": 0,
+      "created_at": "2026-03-05",
+      "activated": false,
+      "machine_id": null,
+      "activated_at": null,
+      "expires_at": null,
+      "revoked": false
     }
   ]
 }

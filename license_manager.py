@@ -8,6 +8,7 @@ import json
 import base64
 import datetime
 import os
+import sys
 import requests
 
 GITHUB_TOKEN = os.environ.get("GB_TOKEN", "")  # set via config.dat
@@ -15,9 +16,31 @@ GITHUB_REPO  = "yamannerhan/REHA"
 GITHUB_API   = "https://api.github.com"
 LICENSE_FILE = "licenses.json"
 VERSION_FILE = "version.json"
-LOCAL_CACHE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".lic_cache")
-CONFIG_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".gbcfg")
 APP_VERSION  = "1.0.0"
+
+
+def _get_base_dir() -> str:
+    """PyInstaller frozen EXE veya normal Python — doğru dizini döndür."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+LOCAL_CACHE = os.path.join(_get_base_dir(), ".lic_cache")
+CONFIG_FILE = os.path.join(_get_base_dir(), ".gbcfg")
+
+
+def _fix_ssl():
+    """PyInstaller'da SSL sertifikası yolunu düzelt."""
+    try:
+        import certifi
+        os.environ.setdefault("SSL_CERT_FILE",      certifi.where())
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+    except Exception:
+        pass
+
+
+_fix_ssl()
 
 _XOR_KEY = 0x5A
 
@@ -68,12 +91,21 @@ def get_hwid() -> str:
 
 
 def _gh_get(path: str):
+    tok = get_token()
+    if not tok:
+        raise RuntimeError("Token bulunamadı (.gbcfg eksik)")
     url = f"{GITHUB_API}/repos/{GITHUB_REPO}/contents/{path}"
-    r = requests.get(url, headers=get_headers(), timeout=12)
+    r = requests.get(url, headers=get_headers(), timeout=15)
     if r.status_code == 200:
         data = r.json()
         content = base64.b64decode(data["content"]).decode("utf-8")
         return json.loads(content), data["sha"]
+    if r.status_code == 401:
+        raise RuntimeError("GitHub token geçersiz (401)")
+    if r.status_code == 403:
+        raise RuntimeError("GitHub erişim reddedildi (403)")
+    if r.status_code == 404:
+        raise RuntimeError(f"GitHub dosya bulunamadı: {path}")
     return None, None
 
 
@@ -154,8 +186,10 @@ def validate_key(key: str, hwid: str) -> tuple[bool, str]:
         else:
             return False, "Bu key başka bir PC'ye kayıtlı (HWID uyuşmuyor)"
 
-    except requests.exceptions.ConnectionError:
-        return False, "İnternet bağlantısı yok"
+    except requests.exceptions.ConnectionError as e:
+        return False, f"İnternet bağlantısı yok ({e.__class__.__name__})"
+    except requests.exceptions.Timeout:
+        return False, "Bağlantı zaman aşımı (timeout)"
     except Exception as ex:
         return False, f"Hata: {ex}"
 

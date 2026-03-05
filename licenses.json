@@ -16,10 +16,10 @@
       "type": "unlimited",
       "duration_days": 0,
       "created_at": "2026-03-05",
-      "activated": true,
+      "activated": false,
       "active": true,
-      "machine_id": "B5E0908BC428F264228912D7",
-      "activated_at": "2026-03-05T21:52:04.677236",
+      "machine_id": null,
+      "activated_at": null,
       "expires_at": null
     }
   ]
